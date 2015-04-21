@@ -1,0 +1,2 @@
+# getnewsapp
+getnewsapp
