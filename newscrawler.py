@@ -6,6 +6,9 @@ import urllib.request
 import urllib.error
 import re
 import urllib.parse
+import os
+import sys
+import csv
 
 from bs4 import BeautifulSoup
 
@@ -276,13 +279,13 @@ class ArchiveCrawlerBezformataRu(ArchiveCrawler):
 
             article_soup = BeautifulSoup(article_data)
 
-            news.text = article_soup.find('div', attrs={'id': 'hc'}).get_text()
+            # Убрать текст картинок и ссылки в конце
+            all_p_tag = article_soup.find('div', attrs={'id': 'hc'}).find_all('p')
+            news.text = ''.join([tag_str.text for tag_str in all_p_tag])
+
             news.source = article_soup.find('div', attrs={'class': 'sourcelink_box'}).find('div').find('a').get_text()
 
-            # TODO Cut some site-specific words from title.
-            # Example: "Москва | В Химках мужчина отнял у полицейского пистолет
-            # и открыл стрельбу - БезФормата.Ru - Новости"
-            news.title = article_soup.title.get_text()
+            news.title = article_soup.find('h1').get_text()
 
             logger.debug('_get_news_article: fetched news: {0}'.format(news))
             logger.info('_get_news_article: news fetched. Title is {0}'.format(news.title))
@@ -320,7 +323,7 @@ class NewsArticle():
                'source: {4}\n' \
                'category: {5}\n' \
                'title: {6}\n' \
-               'text (the begining only): {7}\n'.format(self._crawler_type, self._crawler_name,
+               'text (the beginning only): {7}\n'.format(self._crawler_type, self._crawler_name,
                                   self._region, self._date,
                                   self._source, self._category,
                                   self._title, self._text[0:50])
@@ -390,10 +393,55 @@ class NewsArticle():
         self._text = value
 
 
-class Writer():
-    """ Abstract writer
+class CsvWriter():
+    """ writer to csv file
     """
-    pass
+
+    def __init__(self):
+        self.__header = []
+        self.__delimiter = ';'
+        self.__encoding = 'utf-8'
+        self.__file_name = 'out.csv'
+        self.__work_folder = os.getcwd()
+
+    def write(self, news):
+        file_path = os.path.abspath(self.__work_folder + '\\' + self.__file_name)
+        test = news.__dict__
+        with open(file_path, 'w', newline='') as csvfile:
+            filewriter = csv.writer(csvfile, delimiter=';')
+
+            # TODO Rewrite this!!!
+
+            items_str = []
+            for item in news.__dict__:
+                items_str.append(item)
+
+            filewriter.writerow(items_str)
+
+            # TODO Rewrite this!!!
+
+            """self._crawler_type = None
+            self._crawler_name = None
+            self._region = None
+            self._date = None
+            self._source = None
+            self._category = None
+            self._title = ""
+            self._text = ""
+            """
+
+            items_str = []
+            for item in news.__dict__:
+                items_str.append(news.__dict__[item])
+
+            filewriter.writerow(items_str)
+
+
+
+
+
+
+
 
 
 
