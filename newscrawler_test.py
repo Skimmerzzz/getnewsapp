@@ -43,7 +43,7 @@ class MyTestCase(unittest.TestCase):
         self.assertEqual(str(self.__news), news_as_str)
 
     def test_csvwriter_write(self):
-        cw = newscrawler.CsvWriter()
+        cw = newscrawler.FileWriter()
         cw.write(self.__news)
 
 

@@ -1,18 +1,24 @@
 __author__ = 'Skimmerzzz'
 
 import logging
+
 import datetime
+import time
+
 import urllib.request
 import urllib.error
 import re
 import urllib.parse
+
 import os
-import sys
 import csv
+
+import hashlib
 
 from bs4 import BeautifulSoup
 
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
 
 _REGIONS_BY_OKTMO_DIC = {'79': ('Республика Адыгея', 'maikop'),
                          '84': ('Республика Алтай', 'gornoaltaysk'),
@@ -140,7 +146,7 @@ class ArchiveCrawler(NewsCrawler):
         self._crawler_type = 'archive'
         self._start_date = datetime.date(1999, 1, 1)
         self._end_date = datetime.date.today()
-        self._query_timeout = 5
+        self._query_timeout = 0
 
         logger.debug("Archive crawler instance created")
 
@@ -177,7 +183,7 @@ class ArchiveCrawlerBezformataRu(ArchiveCrawler):
         self._end_date = end_date
 
     # TODO Make dates optional
-    def get_region_news(self, region, start_date, end_date):
+    def get_region_news(self, region, start_date=datetime.date.today(), end_date=datetime.date.today()):
         """ Получить новости региона в заданном диапазоне дат.
         :param region: Регион, для которого получаем новости
         :param start_date:
@@ -206,6 +212,9 @@ class ArchiveCrawlerBezformataRu(ArchiveCrawler):
                     continue
                 else:
                     news_list.append(news_article)
+
+                self._wait_after_news_fetching()
+
             current_date = current_date + datetime.timedelta(days=1)
 
         logger.info("Fetched %d news" % len(news_list))
@@ -221,6 +230,7 @@ class ArchiveCrawlerBezformataRu(ArchiveCrawler):
 
         logger.debug(' _get_news_links - IN')
 
+        # Site specific URL constants
         main_hostname = 'bezformata.ru'
         news_links_page_path = '/daysnews/'
         news_page_path = '/listnews/'
@@ -281,11 +291,23 @@ class ArchiveCrawlerBezformataRu(ArchiveCrawler):
 
             # Убрать текст картинок и ссылки в конце
             all_p_tag = article_soup.find('div', attrs={'id': 'hc'}).find_all('p')
-            news.text = ''.join([tag_str.text for tag_str in all_p_tag])
+
+            #news.text = ''.join([tag_str.text for tag_str in all_p_tag])
+            #news.text.replace("\n", " ").replace("\r", " ")
+
+            # TODO to remove CRLF
+            news.text = ' '.join(''.join([tag_str.text for tag_str in all_p_tag]).split())
 
             news.source = article_soup.find('div', attrs={'class': 'sourcelink_box'}).find('div').find('a').get_text()
 
-            news.title = article_soup.find('h1').get_text()
+            #news.title = article_soup.find('h1').get_text()
+            #news.title.replace("\n", " ").replace("\r", " ")
+
+            # TODO to remove CRLF
+            news.title = ' '.join(article_soup.find('h1').get_text().split())
+
+            news.date = datetime.date.today()
+            news.calc_text_md5()
 
             logger.debug('_get_news_article: fetched news: {0}'.format(news))
             logger.info('_get_news_article: news fetched. Title is {0}'.format(news.title))
@@ -299,6 +321,9 @@ class ArchiveCrawlerBezformataRu(ArchiveCrawler):
 
     def get_all_news(self, start_date, end_date):
         pass
+
+    def _wait_after_news_fetching(self):
+        time.sleep(self._query_timeout)
 
 
 class NewsArticle():
@@ -315,6 +340,8 @@ class NewsArticle():
         self._category = None
         self._title = ""
         self._text = ""
+        self._text_md5 = ""
+        self._url = ""
 
     def __str__(self):
         return 'crawler type: {0}, crawler name: {1}\n' \
@@ -392,28 +419,50 @@ class NewsArticle():
     def text(self, value):
         self._text = value
 
+    @property
+    def text_md5(self):
+        return self._text_md5
 
-class CsvWriter():
+    def calc_text_md5(self):
+        m = hashlib.md5()
+        m.update(self._text.encode('utf-8'))
+        # TODO Fix this (possibly digest value break file output
+        #self._text_md5 = m.digest()
+        self._text_md5 = 'TBD'
+        logger.debug("NewsArticle hash.setter: hash {0} calculated for {1}".format(self._text_md5, self._text))
+        logger.info("NewsArticle hash.setter: hash calculated")
+
+
+
+class FileWriter():
     """ writer to csv file
     """
 
-    def __init__(self):
+    # TODO filename and dirname has to be in the signature
+    def __init__(self,  work_folder=os.getcwd(), file_name_prefix='out', file_type='csv'):
         self.__header = []
         self.__delimiter = ';'
         self.__encoding = 'utf-8'
-        self.__file_name = 'out.csv'
-        self.__work_folder = os.getcwd()
 
-    def write(self, news):
+        if file_type == 'csv':
+            file_name_suffix = 'csv'
+        else:
+            file_name_suffix = 'txt'
+
+        self.__file_name = file_name_prefix + '.' + file_name_suffix
+        self.__work_folder = work_folder
+
+    def write_news_list(self, news_list):
         file_path = os.path.abspath(self.__work_folder + '\\' + self.__file_name)
-        test = news.__dict__
-        with open(file_path, 'w', newline='') as csvfile:
+
+        with open(file_path, 'a', newline='', encoding=self.__encoding) as csvfile:
             filewriter = csv.writer(csvfile, delimiter=';')
 
             # TODO Rewrite this!!!
-
+            # fetch header
             items_str = []
-            for item in news.__dict__:
+
+            for item in news_list[0].__dict__:
                 items_str.append(item)
 
             filewriter.writerow(items_str)
@@ -429,12 +478,13 @@ class CsvWriter():
             self._title = ""
             self._text = ""
             """
+            for item_row in news_list:
+                items_str = []
+                for item in item_row.__dict__:
+                    items_str.append(item_row.__dict__[item])
 
-            items_str = []
-            for item in news.__dict__:
-                items_str.append(news.__dict__[item])
-
-            filewriter.writerow(items_str)
+                filewriter.writerow(items_str)
+                print(items_str)
 
 
 
