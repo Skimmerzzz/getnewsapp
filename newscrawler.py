@@ -168,7 +168,7 @@ class ArchiveCrawler(NewsCrawler):
         self._crawler_type = 'archive'
         self._start_date = datetime.date(1999, 1, 1)
         self._end_date = datetime.date.today()
-        self._query_timeout = 2
+        self._query_timeout = 1
 
         logger.debug("Archive crawler instance created")
 
@@ -476,29 +476,33 @@ class ArchiveCrawlerBezformataRu(ArchiveCrawler):
 
             article_soup = BeautifulSoup(article_data)
 
-            # Убрать текст картинок и ссылки в конце
-            all_p_tag = article_soup.find('div', attrs={'id': 'hc'}).find_all('p')
+            try:
+                # Убрать текст картинок и ссылки в конце
+                all_p_tag = article_soup.find('div', attrs={'id': 'hc'}).find_all('p')
 
-            # TODO to remove CRLF
-            news.text = ' '.join(''.join([tag_str.text for tag_str in all_p_tag]).split())
-            news.text = '.'.join(news.text.split(';'))
-            news.text = ' '.join(news.text.split('"'))
-            news.text = ' '.join(news.text.split("'"))
+                # TODO to remove CRLF
+                news.text = ' '.join(''.join([tag_str.text for tag_str in all_p_tag]).split())
+                news.text = '.'.join(news.text.split(';'))
+                news.text = ' '.join(news.text.split('"'))
+                news.text = ' '.join(news.text.split("'"))
 
-            news.source = article_soup.find('div', attrs={'class': 'sourcelink_box'}).find('div').find('a').get_text()
+                news.source = article_soup.find('div', attrs={'class': 'sourcelink_box'}).find('div').find('a').get_text()
 
-            # TODO to remove CRLF
-            news.title = ' '.join(article_soup.find('h1').get_text().split())
-            news.title = '.'.join(news.title.split(';'))
+                # TODO to remove CRLF
+                news.title = ' '.join(article_soup.find('h1').get_text().split())
+                news.title = '.'.join(news.title.split(';'))
 
-            news.fetch_date = datetime.date.today()
-            news.calc_text_md5()
+                news.fetch_date = datetime.date.today()
+                news.calc_text_md5()
 
-            # Дата и время загрузки новости
-            news.date = article_soup.find('div', attrs={'class': 'sourcedatelink_box'}).find('span').get_text()
+                # Дата и время загрузки новости
+                news.date = article_soup.find('div', attrs={'class': 'sourcedatelink_box'}).find('span').get_text()
 
-            logger.debug('_get_news_article: fetched news: {0}'.format(news))
-            logger.debug('_get_news_article: news fetched. Title is {0}'.format(news.title))
+                logger.debug('_get_news_article: fetched news: {0}'.format(news))
+                logger.debug('_get_news_article: news fetched. Title is {0}'.format(news.title))
+            except:
+                logger.warning("_get_news_article: Can't find tag in news HTML for URL {0}".format(link))
+                return None
 
         except urllib.error.URLError as e:
             logger.warning('_get_news_article: URL error {0} for URL {1}'.format(e.reason, link))
@@ -655,12 +659,19 @@ class FileWriter():
         self.__work_folder = work_folder
 
     def write_news_list(self, file_name, news_list):
+        """
+
+        :param file_name:
+        :param news_list:
+        :return:
+        """
         file_path = os.path.abspath(self.__work_folder + '\\' + file_name + '.' + self.file_name_suffix)
 
+        # TODO Let's try binary mode, like in examples
         with open(file_path, 'a', newline='', encoding=self.__encoding) as csvfile:
             filewriter = csv.writer(csvfile, delimiter=';', dialect='excel')
 
-            # TODO Rewrite this!!!
+            # TODO Fetch headers from static property of class MewsArticle as list
             # fetch header
             items_str = []
 
