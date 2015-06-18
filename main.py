@@ -2,69 +2,93 @@ __author__ = 'Skimmerzzz'
 
 import logging
 import newscrawler
-import datetime
+import sys
 
 
 def main():
 
-    """
-    start_date = datetime.date(2015, 4, 20)
-    end_date = datetime.date(2015, 4, 20)
-    cr = newscrawler.ArchiveCrawlerBezformataRu()
-    # TODO Make a dictionary may be
-    #news = cr.get_news_by_region_n_time('45', start_date, end_date)
-    news = cr.get_news_by_region_n_time('45')
+    def print_help():
+        print('Usage: \n'
+              '\t -h    This help\n'
+              '\t --bypage\n'
+              '\t\t Fetch all news for specified category and regions\n'
+              '\t\t Set category first, then all regions OKTMO codes\n'
+              '\t\t Example: fetch all news for Moscow and Altaiskiy krai, finance category\n'
+              '\t\t     PROGNAME --bypage finance 45 1\n'
+              '\t -p\n'
+              '\t\t the same as --bypage')
 
-    """
+        print_regions_codes()
+        print('')
+        print_categories()
 
-    # TODO Make tests
-    #test = newscrawler.get_all_categories()
-    #test = newscrawler.get_all_regions_codes()
-    #print(test)
+    def print_regions_codes():
+        print('Possible region codes:')
+        print(newscrawler.get_all_regions_codes())
 
-    category = 'finance'
-    region = '1'
+    def print_categories():
+        print('Possible categories:')
+        print(newscrawler.get_all_categories())
 
-    cr = newscrawler.ArchiveCrawlerBezformataRu()
-    """
-    min_page = 1
-    max_page = cr.get_max_page_number(region, category)
-    print('=== max_page is ' + str(max_page))
+    arguments = sys.argv
 
-    news = cr.get_news_by_category_n_page(region, category, min_page, max_page)
+    if len(arguments) < 2:
+        print('Incorrect usage.')
+        print_help()
+        sys.exit()
 
-    wr = newscrawler.FileWriter()
-    wr.write_news_list(region + '-' + category + '-' + str(min_page) + '-' + str(max_page), news)"""
+    if arguments[1] == '-h' or arguments[1] == '--help':
+        print_help()
+    elif arguments[1] == '-p' or arguments[1] == '--bypage':
+        if len(arguments) < 3:
+            print('Incorrect usage.')
+            print_help()
+            sys.exit()
 
-    # ['8', '10', '11', '12']
-    # ['14', '15', '17', '18', '19', '20']
-    # ['24', '25', '27', '29', '32', '33', '34', '37', '38']
-    # '41', '42', '44', '46', '47',
-    # '49', '50', '52', '53', '54', '56', '58', '22'
-    # '60', '61', '36', '63', '64', '65', '66', '68', '69', '28'
+        category = arguments[2]
+        if category in newscrawler.get_all_categories():
+            print('Correct category')
 
-    for region in []:
-        min_page = 1
-        max_page = int(cr.get_max_page_number(region, category))
-        print('=== max_page is ' + str(max_page))
+            if len(arguments) < 4:
+                print('Incorrect usage. Please set region codes')
+                print_help()
+                sys.exit()
 
-        news = cr.get_news_by_category_n_page(region, category, min_page, max_page)
+            regions = arguments[3:]
 
-        wr = newscrawler.FileWriter()
-        wr.write_news_list(region + '-' + category + '-' + str(min_page) + '-' + str(max_page), news)
+            # finance, 41 region - only 2 pages!
 
-    """for region in newscrawler._REGIONS_BY_OKTMO_DIC:
-        min_page = 1
-        max_page = int(cr.get_max_page_number(region, category))
-        print('=== max_page is ' + str(max_page))
+            for region in regions:
+                if region in newscrawler.get_all_regions_codes():
+                    print('Fetch news for region {0}'.format(newscrawler.get_region_name_by_oktmo(region)[0]))
 
-        news = cr.get_news_by_category_n_page(region, category, min_page, max_page)
+                    cr = newscrawler.ArchiveCrawlerBezformataRu()
 
-        wr = newscrawler.FileWriter()
-        wr.write_news_list(region + '-' + category + '-' + str(min_page) + '-' + str(max_page), news)
-    """
+                    min_page = 1
+                    max_page = int(cr.get_max_page_number(region, category))
+                    print('=== max_page is ' + str(max_page))
 
-    #news = cr.get_news_by_category_n_page()
+                    news = cr.get_news_by_category_n_page(region, category, min_page, max_page)
+
+                    wr = newscrawler.FileWriter()
+                    wr.write_news_list(region + '-' + category + '-' + str(min_page) + '-' + str(max_page), news)
+
+                else:
+                    print('Incorrect region.')
+                    print_regions_codes()
+                    sys.exit()
+
+
+
+        else:
+            print('Incorrect category')
+            print_categories()
+            sys.exit()
+
+    else:
+        print('Incorrect usage.')
+        print_help()
+        sys.exit()
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO)

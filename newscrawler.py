@@ -20,7 +20,10 @@ from bs4 import BeautifulSoup
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
-_CATEGORIES_LIST = ['finance', 'politic', 'state', 'economics']
+_CATEGORIES_LIST = ['society', 'sport', 'kultura', 'religion', 'incident', 'event', 'poll', 'science', 'politic',
+                    'state', 'army', 'city', 'region', 'projects', 'conquest', 'expo', 'economics', 'finance',
+                    'energetics', 'eco', 'health', 'realty', 'transport', 'communication', 'internet',
+                    'peoples', 'reporter', 'report', 'cutoff', 'horoscope']
 
 _REGIONS_BY_OKTMO_DIC = {'79': ('Республика Адыгея', 'maikop'),
                          '84': ('Республика Алтай', 'gornoaltaysk'),
@@ -115,8 +118,19 @@ def get_all_categories():
     """
     return _CATEGORIES_LIST
 
-
 def get_all_regions_codes():
+    """
+    :return: list of all Bezformata.Ru codes
+    """
+
+    result = []
+
+    for key in _REGIONS_BY_OKTMO_DIC:
+        result.append(key)
+
+    return result
+
+def get_all_regions_mnemonic():
     """
     :return: list of all Bezformata.Ru codes
     """
@@ -521,6 +535,9 @@ class NewsArticle():
     """ Новость: Регион, Дата новости, Источник, Категория, Заголовок, Текст (FT 1). Дополнительно имя и тип краулера.
     """
 
+    fields_list = ['_region', '_category', '_date', '_fetch_date', '_url', '_title', '_source', '_crawler_type',
+                   '_crawler_name', '_text', '_text_md5']
+
     def __init__(self):
         # FT 1    Нужны следующие поля по каждой новости: Регион, Дата новости, Источник, Категория, Заголовок, Текст
         self._crawler_type = None
@@ -671,33 +688,18 @@ class FileWriter():
         with open(file_path, 'a', newline='', encoding=self.__encoding) as csvfile:
             filewriter = csv.writer(csvfile, delimiter=';', dialect='excel')
 
-            # TODO Fetch headers from static property of class MewsArticle as list
-            # fetch header
-            items_str = []
+            # Fetch headers from static property of class MewsArticle as list
+            items_header = NewsArticle.fields_list
 
-            for item in news_list[0].__dict__:
-                items_str.append(item)
+            filewriter.writerow(items_header)
 
-            filewriter.writerow(items_str)
-
-            # TODO Rewrite this!!!
-
-            """self._crawler_type = None
-            self._crawler_name = None
-            self._region = None
-            self._date = None
-            self._source = None
-            self._category = None
-            self._title = ""
-            self._text = ""
-            """
             for item_row in news_list:
                 items_str = []
-                for item in item_row.__dict__:
-                    items_str.append(item_row.__dict__[item])
+                for key in items_header:
+                    items_str.append(item_row.__dict__[key])
 
                 filewriter.writerow(items_str)
-                print(items_str)
+                # print(items_str)
 
 
 
