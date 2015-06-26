@@ -23,6 +23,7 @@ def main():
     #print(test)
 
     category = 'finance'
+    #category = 'energetics'
     region = '1'
 
     cr = newscrawler.ArchiveCrawlerBezformataRu()
@@ -48,11 +49,13 @@ def main():
 
 
 
-    for region in ['26', '30', '35', '57', '76', '79', '80', '81', '82',
-                   '83', '84', '85', '86', '87', '88', '89', '90', '91',
-                   '92', '93', '94', '95', '96', '97', '98', '99']:
+    for region in ['41']:
         min_page = 1
-        max_page = int(cr.get_max_page_number(region, category))
+        try:
+            max_page = int(cr.get_max_page_number(region, category))
+        except TypeError:
+            print('Для региона {0}, категории {1} нет доступных новостей'.format(region, category))
+            continue
         print('=== max_page is ' + str(max_page))
 
         news = cr.get_news_by_category_n_page(region, category, min_page, max_page)
@@ -74,6 +77,6 @@ def main():
     #news = cr.get_news_by_category_n_page()
 
 if __name__ == '__main__':
-    logging.basicConfig(level=logging.INFO)
-
+    #logging.basicConfig(level=logging.INFO)
+    logging.basicConfig(level=logging.DEBUG)
     main()

@@ -60,12 +60,16 @@ def main():
 
             for region in regions:
                 if region in newscrawler.get_all_regions_codes():
-                    print('Fetch news for region {0}'.format(newscrawler.get_region_name_by_oktmo(region)[0]))
-
+                    print('Получаем новости для региона {0}'.format(newscrawler.get_region_name_by_oktmo(region)[0]))
+                    print('='*40)
                     cr = newscrawler.ArchiveCrawlerBezformataRu()
 
                     min_page = 1
-                    max_page = int(cr.get_max_page_number(region, category))
+                    try:
+                        max_page = int(cr.get_max_page_number(region, category))
+                    except TypeError:
+                        print('Для региона {0}, категории {1} нет доступных новостей'.format(region, category))
+                        continue
                     print('=== max_page is ' + str(max_page))
 
                     news = cr.get_news_by_category_n_page(region, category, min_page, max_page)

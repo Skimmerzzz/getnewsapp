@@ -19,6 +19,7 @@ from bs4 import BeautifulSoup
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
+#logger.setLevel(logging.DEBUG)
 
 _CATEGORIES_LIST = ['society', 'sport', 'kultura', 'religion', 'incident', 'event', 'poll', 'science', 'politic',
                     'state', 'army', 'city', 'region', 'projects', 'conquest', 'expo', 'economics', 'finance',
@@ -182,7 +183,7 @@ class ArchiveCrawler(NewsCrawler):
         self._crawler_type = 'archive'
         self._start_date = datetime.date(1999, 1, 1)
         self._end_date = datetime.date.today()
-        self._query_timeout = 1
+        self._query_timeout = 0.5
 
         logger.debug("Archive crawler instance created")
 
@@ -288,8 +289,13 @@ class ArchiveCrawlerBezformataRu(ArchiveCrawler):
 
             soup = BeautifulSoup(data)
 
-            all_li = soup.find('div', attrs={'class': 'npage_box'}).find('ul', attrs={'id': 'nav-pages'})
-            li_list = soup.find_all('li')
+            try:
+                all_li = soup.find('div', attrs={'class': 'npage_box'}).find('ul', attrs={'id': 'nav-pages'})
+                li_list = soup.find_all('li')
+            except:
+                logger.debug("get_max_page_number - Can't get min and max page numbers "
+                            "for region {0} and category {1}".format(region, category))
+                return None
 
             # TODO May be better iterate all and get by title='Последняя страница'
             # last_li = li_list[len(li_list)-1].next_element.attrs['title']
