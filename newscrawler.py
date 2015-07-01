@@ -19,7 +19,7 @@ from bs4 import BeautifulSoup
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
-#logger.setLevel(logging.DEBUG)
+# logger.setLevel(logging.DEBUG)
 
 _CATEGORIES_LIST = ['society', 'sport', 'kultura', 'religion', 'incident', 'event', 'poll', 'science', 'politic',
                     'state', 'army', 'city', 'region', 'projects', 'conquest', 'expo', 'economics', 'finance',
@@ -119,6 +119,7 @@ def get_all_categories():
     """
     return _CATEGORIES_LIST
 
+
 def get_all_regions_codes():
     """
     :return: list of all Bezformata.Ru codes
@@ -130,6 +131,7 @@ def get_all_regions_codes():
         result.append(key)
 
     return result
+
 
 def get_all_regions_mnemonic():
     """
@@ -260,7 +262,6 @@ class ArchiveCrawlerBezformataRu(ArchiveCrawler):
         logger.debug(news_list)
         return news_list
 
-
     def get_max_page_number(self, region, category):
         """
         :param region:
@@ -294,14 +295,13 @@ class ArchiveCrawlerBezformataRu(ArchiveCrawler):
                 li_list = soup.find_all('li')
             except:
                 logger.debug("get_max_page_number - Can't get min and max page numbers "
-                            "for region {0} and category {1}".format(region, category))
+                             "for region {0} and category {1}".format(region, category))
                 return None
 
             # TODO May be better iterate all and get by title='Последняя страница'
             # last_li = li_list[len(li_list)-1].next_element.attrs['title']
 
             last_li_text = li_list[len(li_list) - 1].next_element.attrs['href']
-
 
         except urllib.error.URLError as e:
             print(e.reason)
@@ -313,9 +313,36 @@ class ArchiveCrawlerBezformataRu(ArchiveCrawler):
 
         return int(result)
 
+    def get_news_links_number(self, region, category):
+        """
+        Считает количество ссылок для всех страниц заданных региона и категории
+        :param region:
+        :param category:
+        :return: Integer
+        """
+
+        min_page = 1
+
+        try:
+            max_page = int(self.get_max_page_number(region, category))
+        except TypeError:
+            logger.debug("Для региона {0}, категории {1} нет страниц с сылками на новости".format(region, category))
+            return 0
+
+        news_links_list = []
+
+        for current_page in range(min_page, max_page + 1):
+            news_links_list += self._get_news_links_by_page(region, category, current_page)
+
+        # Remove duplicates
+        news_links_list = list(set(news_links_list))
+
+        news_links_count = len(news_links_list)
+
+        return news_links_count
 
     def get_news_by_category_n_page(self, region, category, start_page, end_page):
-        """
+        """ Возвращает список объектов новостей для заданных региона, категории и интервала страниц
         :param region: Регион, для которого получаем новости
         :param category: Категория, для которой получаем новости
         :param start_page: Номер перовый страницы для получения новостей
@@ -355,7 +382,8 @@ class ArchiveCrawlerBezformataRu(ArchiveCrawler):
         counter = 0
 
         for link_item in enumerate(news_links_list):
-            news_article = self._get_news_article(self._crawler_type, self._crawler_name, region, link_item[1], category)
+            news_article = self._get_news_article(self._crawler_type, self._crawler_name, region, link_item[1],
+                                                  category)
             if news_article is None:
                 continue
             else:
@@ -364,12 +392,11 @@ class ArchiveCrawlerBezformataRu(ArchiveCrawler):
             self._wait_after_news_fetching()
 
             if link_item[0] % 50 == 0:
-                        logger.info('link_idx {0}'.format(link_item[0]))
+                logger.info('link_idx {0}'.format(link_item[0]))
 
         logger.info("Fetched %d news" % len(news_list))
         logger.debug(news_list)
         return news_list
-
 
     def _get_news_links_by_page(self, region, category, page):
         """
@@ -404,7 +431,7 @@ class ArchiveCrawlerBezformataRu(ArchiveCrawler):
             # Fetch links to news articles only
             # Exclude main link by ^"
 
-            # В режиме паждинации находит скрытые урлы из  div class=topic_box / div class=topicheader_box
+            # В режиме паджинации находит скрытые урлы из  div class=topic_box / div class=topicheader_box
             # Правая колонка новостей за сегодня. Вырезать позже.
             for link in soup.find_all('a', attrs={'href': re.compile(main_hostname + news_page_path + '[^"]')}):
 
@@ -419,12 +446,11 @@ class ArchiveCrawlerBezformataRu(ArchiveCrawler):
 
         logger.debug(' _get_news_links_by_page - OUT')
 
-        return links_list
-
-
-        # TODO Stub is here
+        # Links for unit-tests
         # ['http://moskva.bezformata.ru/listnews/obyazatelnogo-meditcinskogo-strahovaniya/33384150/']
-        return ['http://moskva.bezformata.ru/listnews/himkah-muzhchina-otnyal-u-politcejskogo/32405548/']
+        # ['http://moskva.bezformata.ru/listnews/himkah-muzhchina-otnyal-u-politcejskogo/32405548/']
+
+        return links_list
 
     def _get_news_links_by_date(self, region, date):
         """ Получить ссылки на новости для заданных даты и региона
@@ -506,7 +532,8 @@ class ArchiveCrawlerBezformataRu(ArchiveCrawler):
                 news.text = ' '.join(news.text.split('"'))
                 news.text = ' '.join(news.text.split("'"))
 
-                news.source = article_soup.find('div', attrs={'class': 'sourcelink_box'}).find('div').find('a').get_text()
+                news.source = article_soup.find('div', attrs={'class': 'sourcelink_box'}).find('div').find(
+                    'a').get_text()
 
                 # TODO to remove CRLF
                 news.title = ' '.join(article_soup.find('h1').get_text().split())
@@ -529,9 +556,6 @@ class ArchiveCrawlerBezformataRu(ArchiveCrawler):
             news = None
 
         return news
-
-    def get_all_news(self, start_date, end_date):
-        pass
 
     def _wait_after_news_fetching(self):
         time.sleep(self._query_timeout)
@@ -645,7 +669,7 @@ class NewsArticle():
         # self._text_md5 = m.digest()
         self._text_md5 = 'TBD'
         logger.debug("NewsArticle hash.setter: hash {0} calculated for {1}".format(self._text_md5, self._text))
-        #logger.info("NewsArticle hash.setter: hash calculated")
+        # logger.info("NewsArticle hash.setter: hash calculated")
 
     @property
     def url(self):
@@ -706,20 +730,3 @@ class FileWriter():
 
                 filewriter.writerow(items_str)
                 # print(items_str)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
