@@ -338,6 +338,8 @@ class ArchiveCrawlerBezformataRu(ArchiveCrawler):
         news_links_list = list(set(news_links_list))
 
         news_links_count = len(news_links_list)
+        logger.debug('get_news_links_number: fetch {0} news links number for all pages of '
+                     'the region {1} and category {2}'.format(news_links_count, region, category))
 
         return news_links_count
 
