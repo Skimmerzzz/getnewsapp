@@ -550,7 +550,7 @@ class ArchiveCrawlerBezformataRu(ArchiveCrawler):
                 logger.debug('_get_news_article: fetched news: {0}'.format(news))
                 logger.debug('_get_news_article: news fetched. Title is {0}'.format(news.title))
             except:
-                logger.warning("_get_news_article: Не найден текст новости в HTML по URL {0}".format(link))
+                logger.warning("_get_news_article: Не найден тэг текста новости в HTML по URL {0}".format(link))
                 return None
 
         except urllib.error.URLError as e:
