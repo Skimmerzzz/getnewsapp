@@ -358,8 +358,8 @@ class ArchiveCrawlerBezformataRu(ArchiveCrawler):
         news_list = []
         news_links_list = []
 
-        logger.info("Fetching news' links for %s region, %s category and %d end_page" % (
-            get_region_name_by_oktmo(region)[0], category, end_page))
+        logger.info("Fetching news' links for %s region, %s category and %d start_page, %d end_page" % (
+            get_region_name_by_oktmo(region)[0], category, start_page, end_page))
 
         while current_page <= end_page:
             # Получаем список ссылок новостей для заданных категории, страницы сайта и региона
@@ -376,12 +376,12 @@ class ArchiveCrawlerBezformataRu(ArchiveCrawler):
         # Remove duplicates
         news_links_list = list(set(news_links_list))
 
-        logger.info("Fetched %d news' links for %s region, %s category and %d end_page" % (len(news_links_list),
-                                                                                           get_region_name_by_oktmo(
-                                                                                               region)[0], category,
-                                                                                           end_page))
+        logger.info("Fetched %d news' links for %s region, %s category "
+                    "and %d start_page, %d end_page" % (len(news_links_list),
+                                                        get_region_name_by_oktmo(region)[0],
+                                                        category, start_page, end_page))
 
-        counter = 0
+        news_links_list_len = len(news_links_list)
 
         for link_item in enumerate(news_links_list):
             news_article = self._get_news_article(self._crawler_type, self._crawler_name, region, link_item[1],
@@ -394,7 +394,7 @@ class ArchiveCrawlerBezformataRu(ArchiveCrawler):
             self._wait_after_news_fetching()
 
             if link_item[0] % 50 == 0:
-                logger.info('link_idx {0}'.format(link_item[0]))
+                logger.info('Обработано {0} новостей из {1}'.format(link_item[0], news_links_list_len))
 
         logger.info("Fetched %d news" % len(news_list))
         logger.debug(news_list)

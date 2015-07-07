@@ -8,30 +8,42 @@ from datetime import datetime
 
 def main():
     def print_help():
+
+        PROGNAME = sys.argv[0].split("\\")[::-1][:1][0]
+
         print('Использование: \n'
               '\t --help    Данная страница помощи\n'
               '\t -h\n'
               '\t\t то же самое, что и --help\n'
               '\t --bypage\n'
               '\t\t Получить все новости для указанной категории и региона. '
-              'Регионов может быть указано несколько. Категория - только одна\n'
+              'Регионов может быть указано несколько. Категория - только одна.\n'
               '\t\t Сначала укажите категорию, затем все необходимые ОКТМО коды регионов\n'
               '\t\t Пример: Получить все новости для Москвы и Алтайского края в категории "финансы"\n'
-              '\t\t     PROGNAME --bypage finance 45 1\n'
+              '\t\t     {0} --bypage finance 45 1\n'
               '\t -p\n'
               '\t\t то же самое, что и --bypage\n'
+              '\t --bypagenum\n'
+              '\t\t Получить новости определенных страниц для указанных категории, региона. '
+              'Регион - только один. Категория - только одна\n'
+              '\t\t Сначала укажите категорию, затем ОКТМО код региона.\n'
+              '\t\t Далее диапазон страниц для загрузки.\n'
+              '\t\t Пример: Получить все новости для Москвы в категории "финансы" со второй по десятую страницы\n'
+              '\t\t     {0} --bypage finance 45 2 10\n'
+              '\t -pn\n'
+              '\t\t то же самое, что и --bypagenum\n'
               '\t --count\n'
               '\t\t Вывести количество новостей для всех регионов указанной категории.\n'
               '\t\t Пример: Вывести количество новостей по всем регионам в категории "финансы"\n'
-              '\t\t     PROGNAME --count finance\n'
+              '\t\t     {0} --count finance\n'
               '\t -c\n'
               '\t\t то же самое, что и --count\n'
               '\t --pagenum\n'
               '\t\t Вывести количество страниц новостей для всех регионов указанной категории.\n'
               '\t\t Пример: Вывести количество страниц по всем регионам в категории "финансы"\n'
-              '\t\t     PROGNAME --pagenum finance\n'
+              '\t\t     {0} --pagenum finance\n'
               '\t -n\n'
-              '\t\t то же самое, что и --pagenum\n')
+              '\t\t то же самое, что и --pagenum\n'.format(PROGNAME))
 
         print_regions_codes()
         print('')
@@ -98,6 +110,58 @@ def main():
                     #print_regions_codes()
                     #sys.exit()
                     continue
+
+        else:
+            print('Категория указана неверно.')
+            print_categories()
+            sys.exit()
+
+    elif arguments[1] == '-pn' or arguments[1] == '--bypagenum':
+        if len(arguments) < 3:
+            print('Неверные параметры. Укажите категорию, затем код региона, диапазон страниц для загрузки.')
+            print_help()
+            sys.exit()
+
+        category = arguments[2]
+        if category in newscrawler.get_all_categories():
+
+            if len(arguments) < 4:
+                print('Неверные параметры. Укажите код региона, диапазон страниц для загрузки.')
+                print_help()
+                sys.exit()
+
+            region = arguments[3]
+
+            if len(arguments) < 6:
+                print('Неверные параметры. Укажите диапазон страниц для загрузки.')
+                print_help()
+                sys.exit()
+
+            try:
+                min_page = int(arguments[4])
+                max_page = int(arguments[5])
+            except TypeError:
+                print('Неверно указан диапазон страниц для загрузки.')
+                print_help()
+                sys.exit()
+
+            if max_page < min_page:
+                print('Неверные параметры. Номер первой страницы диапазона для загрузки должен быть меньше или равен '
+                      'номеру последней страницы.')
+                print_help()
+                sys.exit()
+
+            if region in newscrawler.get_all_regions_codes():
+                print('Получаем новости в категории {0} для региона {1} в диапазоне страниц '
+                      'с {2} по {3}'.format(category, newscrawler.get_region_name_by_oktmo(region)[0],
+                      min_page, max_page))
+                print('=' * 50)
+                cr = newscrawler.ArchiveCrawlerBezformataRu()
+
+                news = cr.get_news_by_category_n_page(region, category, min_page, max_page)
+
+                wr = newscrawler.FileWriter()
+                wr.write_news_list(region + '-' + category + '-' + str(min_page) + '-' + str(max_page), news)
 
         else:
             print('Категория указана неверно.')
