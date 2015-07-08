@@ -690,7 +690,7 @@ class NewsArticle():
         self._fetch_date = value
 
 
-class FileWriter():
+class FileWriter:
     """ writer to csv file
     """
 

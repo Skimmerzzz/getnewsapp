@@ -5,59 +5,91 @@ import newscrawler
 import sys
 import os
 from datetime import datetime
-
+from optparse import OptionParser
 
 def main():
-    def print_help():
 
-        PROGNAME = os.path.basename(sys.argv[0])
+    """
+        def print_help():
 
-        print('Использование: \n'
-              '\t --help    Данная страница помощи\n'
-              '\t -h\n'
-              '\t\t то же самое, что и --help\n'
-              '\t --bypage\n'
-              '\t\t Получить все новости для указанной категории и региона. '
-              'Регионов может быть указано несколько. Категория - только одна.\n'
-              '\t\t Сначала укажите категорию, затем все необходимые ОКТМО коды регионов\n'
-              '\t\t Пример: Получить все новости для Москвы и Алтайского края в категории "финансы"\n'
-              '\t\t     {0} --bypage finance 45 1\n'
-              '\t -p\n'
-              '\t\t то же самое, что и --bypage\n'
-              '\t --bypagenum\n'
-              '\t\t Получить новости определенных страниц для указанных категории, региона. '
-              'Регион - только один. Категория - только одна\n'
-              '\t\t Сначала укажите категорию, затем ОКТМО код региона.\n'
-              '\t\t Далее диапазон страниц для загрузки.\n'
-              '\t\t Пример: Получить все новости для Москвы в категории "финансы" со второй по десятую страницы\n'
-              '\t\t     {0} --bypage finance 45 2 10\n'
-              '\t -pn\n'
-              '\t\t то же самое, что и --bypagenum\n'
-              '\t --count\n'
-              '\t\t Вывести количество новостей для всех регионов указанной категории.\n'
-              '\t\t Пример: Вывести количество новостей по всем регионам в категории "финансы"\n'
-              '\t\t     {0} --count finance\n'
-              '\t -c\n'
-              '\t\t то же самое, что и --count\n'
-              '\t --pagenum\n'
-              '\t\t Вывести количество страниц новостей для всех регионов указанной категории.\n'
-              '\t\t Пример: Вывести количество страниц по всем регионам в категории "финансы"\n'
-              '\t\t     {0} --pagenum finance\n'
-              '\t -n\n'
-              '\t\t то же самое, что и --pagenum\n'.format(PROGNAME))
+            PROGNAME = os.path.basename(sys.argv[0])
 
-        print_regions_codes()
-        print('')
-        print_categories()
+            print('Использование: \n'
+                  '\t --help    Данная страница помощи\n'
+                  '\t -h\n'
+                  '\t\t то же самое, что и --help\n'
+                  '\t --bypage\n'
+                  '\t\t Получить все новости для указанной категории и региона. '
+                  'Регионов может быть указано несколько. Категория - только одна.\n'
+                  '\t\t Сначала укажите категорию, затем все необходимые ОКТМО коды регионов\n'
+                  '\t\t Пример: Получить все новости для Москвы и Алтайского края в категории "финансы"\n'
+                  '\t\t     {0} --bypage finance 45 1\n'
+                  '\t -p\n'
+                  '\t\t то же самое, что и --bypage\n'
+                  '\t --bypagenum\n'
+                  '\t\t Получить новости определенных страниц для указанных категории, региона. '
+                  'Регион - только один. Категория - только одна\n'
+                  '\t\t Сначала укажите категорию, затем ОКТМО код региона.\n'
+                  '\t\t Далее диапазон страниц для загрузки.\n'
+                  '\t\t Пример: Получить все новости для Москвы в категории "финансы" со второй по десятую страницы\n'
+                  '\t\t     {0} --bypage finance 45 2 10\n'
+                  '\t -pn\n'
+                  '\t\t то же самое, что и --bypagenum\n'
+                  '\t --count\n'
+                  '\t\t Вывести количество новостей для всех регионов указанной категории.\n'
+                  '\t\t Пример: Вывести количество новостей по всем регионам в категории "финансы"\n'
+                  '\t\t     {0} --count finance\n'
+                  '\t -c\n'
+                  '\t\t то же самое, что и --count\n'
+                  '\t --pagenum\n'
+                  '\t\t Вывести количество страниц новостей для всех регионов указанной категории.\n'
+                  '\t\t Пример: Вывести количество страниц по всем регионам в категории "финансы"\n'
+                  '\t\t     {0} --pagenum finance\n'
+                  '\t -n\n'
+                  '\t\t то же самое, что и --pagenum\n'.format(PROGNAME))
 
-    def print_regions_codes():
-        print('Допустимые коды регионов:')
-        print(newscrawler.get_all_regions_codes())
+            print_regions_codes()
+            print('')
+            print_categories()
 
-    def print_categories():
-        print('Допустимые категории:')
-        print(newscrawler.get_all_categories())
+        def print_regions_codes():
+            print('Допустимые коды регионов:')
+            print(newscrawler.get_all_regions_codes())
 
+        def print_categories():
+            print('Допустимые категории:')
+            print(newscrawler.get_all_categories())
+    """
+
+    usage = "%prog [options] категория регион1 [регион2... регионN]"
+    description = "Получение новостей с сайта bezformata.ru."
+    version = "%prog 1.0"
+    parser = OptionParser(usage=usage, description=description, version=version)
+
+    # The second option value is bydate.
+
+    parser.add_option("-t","--type", dest="crawling_type", help="Режим получения новостей с сайта: по дате (bydate), по страницам (bypage)."
+                                                                "По умолчанию в постраничном режиме."
+                                                                "Фиксируется категория, регион, "
+                                                                "перебираются страницы новостей."
+                                                                "Режим bydate не реализован.")
+
+    parser.add_option("-a", "--action", dest="action", help="Действие: получить новости (getnews), посчитать страницы"
+                                                            "(countpages), посчитать новости (countnews).")
+
+    # TODO Опция номеров страниц? Или две...
+    # TODO FileWriter умеет принимать рабочую папку на вход. Опция?
+    # TODO логгирование в файл. Опция?
+
+    parser.set_defaults(crawling_type="bypage")
+    parser.set_defaults(action="getnews")
+
+    test_args=["-h", "--version"]
+    (options, args) = parser.parse_args(test_args)
+    print(options)
+    print(args)
+
+"""
     arguments = sys.argv
 
     if len(arguments) < 2:
@@ -216,7 +248,7 @@ def main():
         print('Неверные параметры.')
         print_help()
         sys.exit()
-
+"""
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO)
