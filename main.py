@@ -3,13 +3,14 @@ __author__ = 'Skimmerzzz'
 import logging
 import newscrawler
 import sys
+import os
 from datetime import datetime
 
 
 def main():
     def print_help():
 
-        PROGNAME = sys.argv[0].split("\\")[::-1][:1][0]
+        PROGNAME = os.path.basename(sys.argv[0])
 
         print('Использование: \n'
               '\t --help    Данная страница помощи\n'
